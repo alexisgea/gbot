@@ -29,6 +29,13 @@ var key_r = input_states.new("key_r")
 var key_l = input_states.new("key_l")
 var key_j = input_states.new("key_j")
 
+var anim_player = null
+var anim = ""
+var anim_new = ""
+var anim_speed = 1.0
+var anim_blend = 0.2
+
+
 # it use to be the below for info
 #var key_j = Input.is_action_pressed("key_j")
 
@@ -55,6 +62,8 @@ func _ready():
 	set_fixed_process(true)
 	set_applied_force(Vector2(0,extra_gravity))
 	
+	anim_player = get_node("rotate/bot_sprite/AnimationPlayer")	
+	
 	
 func rotate_behavior():
 	if (ORIENTATION == "right" and ORIENTATION_NEXT == "left") or (ORIENTATION == "left" and ORIENTATION_NEXT == "right"):
@@ -73,6 +82,10 @@ func _fixed_process(delta):
 		ground_state(delta)
 	elif PLAYERSTATE == "air":
 		air_state(delta)
+		
+	if anim != anim_new:
+		anim_new = anim
+		anim_player.play(anim,anim_blend,anim_speed)
 
 
 func ground_state(delta):
@@ -80,11 +93,20 @@ func ground_state(delta):
 	if key_r.check() == 2:
 		move(player_speed,acceleration, delta)
 		ORIENTATION_NEXT = "right"
+		anim_speed = 1.5
+		anim_blend = 0.2
+		anim = "run"
 	elif key_l.check() == 2:
 		move(-player_speed,acceleration, delta)
 		ORIENTATION_NEXT = "left"
+		anim_speed = 1.5
+		anim_blend = 0.2
+		anim = "run"
 	else:
 		move(0,acceleration, delta)
+		anim_speed = 0.5
+		anim_blend = 0.2
+		anim = "rest"
 		
 	rotate_behavior()
 	
@@ -107,6 +129,15 @@ func air_state(delta):
 	else:
 		move(0,air_acceleration, delta)
 		
+	if get_linear_velocity().y > 0:
+		anim_speed = 1.0
+		anim_blend = 0.2
+		anim = "fall"
+	else:
+		anim_speed = 1.0
+		anim_blend =0.0
+		anim = "jump"
+		
 	rotate_behavior()
 	
 	if key_j.check() == 1 and jumping == 1:
@@ -114,4 +145,7 @@ func air_state(delta):
 			jumping += 1
 	
 	if is_on_ground():
+		#anim_speed = 0.5
+		#anim_blend = 0.5
+		#anim = "land2"
 		PLAYERSTATE_NEXT = "ground"
