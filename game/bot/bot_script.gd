@@ -35,6 +35,12 @@ var anim_new = ""
 var anim_speed = 1.0
 var anim_blend = 0.2
 
+var sample_speed = 1.0
+
+var sound_player = null
+var sound = ""
+var sound_new = ""
+
 
 # it use to be the below for info
 #var key_j = Input.is_action_pressed("key_j")
@@ -66,6 +72,8 @@ func _ready():
 	
 	anim_player = get_node("rotate/bot_sprite/AnimationPlayer")	
 	
+	sound_player = get_node("SamplePlayer")
+	
 	
 func rotate_behavior():
 	if (ORIENTATION == "right" and ORIENTATION_NEXT == "left") or (ORIENTATION == "left" and ORIENTATION_NEXT == "right"):
@@ -88,27 +96,44 @@ func _fixed_process(delta):
 	if anim != anim_new:
 		anim_new = anim
 		anim_player.play(anim,anim_blend,anim_speed)
-
+	
+	if sound == "silence":
+		if not sound_player.is_active() or sound_new != "walk":
+			sound_player.stop_all()
+			sound_new = sound
+	elif sound != sound_new:
+		sound_new = sound
+		sound_player.play(sound)
+	elif not sound_player.is_active():
+		sound_player.play(sound)
+			
 
 func ground_state(delta):
 	
 	if key_r.check() == 2:
 		move(player_speed,acceleration, delta)
 		ORIENTATION_NEXT = "right"
-		anim_speed = 1.5
+		anim_speed = 1.6
 		anim_blend = 0.2
 		anim = "run"
+		#sample_speed = anim_speed
+		#sound_player.set_pitch_scale(0,sample_speed)
+		#sound = "walk"
 	elif key_l.check() == 2:
 		move(-player_speed,acceleration, delta)
 		ORIENTATION_NEXT = "left"
-		anim_speed = 1.5
+		anim_speed = 1.6
 		anim_blend = 0.2
 		anim = "run"
+		#sample_speed = anim_speed
+		#sound_player.set_pitch_scale(0,sample_speed)
+		#sound = "walk"
 	else:
 		move(0,acceleration, delta)
 		anim_speed = 0.5
 		anim_blend = 0.2
 		anim = "rest"
+		#sound = "silence"
 		
 	rotate_behavior()
 	
@@ -116,6 +141,7 @@ func ground_state(delta):
 		if key_j.check() == 1:
 			set_axis_velocity(Vector2(0,-jumpforce))
 			jumping = 1
+			#sound = "jump"
 	else:
 		PLAYERSTATE_NEXT = "air"
 
@@ -135,6 +161,7 @@ func air_state(delta):
 		anim_speed = 1.0
 		anim_blend = 0.2
 		anim = "fall"
+		#sound = "silence"
 	else:
 		anim_speed = 1.0
 		anim_blend =0.0
@@ -145,9 +172,11 @@ func air_state(delta):
 	if key_j.check() == 1 and jumping == 1:
 			set_axis_velocity(Vector2(0,-jumpforce))
 			jumping += 1
+			#sound = "jump"
 	
 	if is_on_ground():
 		#anim_speed = 0.5
 		#anim_blend = 0.5
 		#anim = "land2"
 		PLAYERSTATE_NEXT = "ground"
+		#sound = "fall"
